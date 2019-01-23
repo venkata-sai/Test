@@ -1,0 +1,3 @@
+insert new commit at line 1
+new changes at line num2
+changes at line num3
