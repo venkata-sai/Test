@@ -1,0 +1,99 @@
+---
+variables:
+  aws_source_ami: ami-4bf3d731
+  aws_region: us-east-1
+  aws_instance_type: p2.xlarge
+  aws_ami_virtualization: hvm
+  aws_vpc_id:
+  aws_subnet_id: subnet-03805248
+  aws_securitygroup_ids: sg-1eda1c6c
+  aws_associate_public_ip_address: "false"
+  ami_name: "asr-{{timestamp}}"
+  storage_volume_size: "40"
+  profile: bixby-next
+  ansible_artifact: 
+  rampcode:
+  locale:
+  script_path: "./packer"
+  ami_users: "717627950615,302637589460,642977738847"
+  ami_regions: "ap-northeast-2,us-west-2"
+builders:
+- type: amazon-ebs
+  profile: "{{user `profile`}}"
+  region: "{{user `aws_region`}}"
+  source_ami: "{{user `aws_source_ami`}}"
+  instance_type: "{{user `aws_instance_type`}}"
+  ssh_username: packer
+  ssh_private_key_file: "/home/jenkins_slave/.ssh/id_rsa"
+  ssh_timeout: 5m
+  ami_virtualization_type: "{{user `aws_ami_virtualization`}}"
+  ami_description: AMI for bixby 2.0 asr p2xlarge
+  ami_name: "{{user `ami_name`}}"
+  associate_public_ip_address: "{{user `aws_associate_public_ip_address`}}"
+  iam_instance_profile: "{{user `aws_iam_instance_profile`}}"
+  vpc_id: "{{user `aws_vpc_id`}}"
+  subnet_id: "{{user `aws_subnet_id`}}"
+  security_group_ids: "{{user `aws_securitygroup_ids`}}"
+  ami_users: "{{user `ami_users`}}"
+  ami_regions: "{{user `ami_regions`}}"
+  ami_block_device_mappings:
+  - device_name: /dev/sda1
+    volume_type: gp2
+    delete_on_termination: true
+    volume_size: 8
+  - device_name: /dev/sdh
+    volume_type: gp2
+    delete_on_termination: true
+    volume_size: "{{user `storage_volume_size`}}"
+  launch_block_device_mappings:
+  - device_name: /dev/sda1
+    volume_type: gp2
+    delete_on_termination: true
+
+    volume_size: 8
+  - device_name: /dev/sdh
+    volume_type: gp2
+    delete_on_termination: true
+    volume_size: "{{user `storage_volume_size`}}"
+  run_tags:
+    Name: "{{user `ami_name`}}"
+    ansible_role: "asr"
+    ramp_code: "{{user `rampcode`}}"
+    language_code: "{{user `locale`}}"
+    env: "prod"
+    state_env: "default"
+    billing: "releng"
+    region: "{{user `aws_region`}}"
+  tags:
+    Name: "{{user `ami_name`}}"
+provisioners:
+- type: shell
+  inline: sleep 10
+- type: shell
+  inline: 
+    - "sudo lspci | grep -i nvidia | wc -l"
+    - "sudo /usr/bin/nvidia-smi -L"
+- type: shell
+  script: '{{user `script_path`}}/bootstrap-centos.sh'
+- type: file
+  source: "{{user `ansible_artifact`}}"
+  destination: "/tmp/{{user `ansible_artifact`}}"
+- type: shell
+  inline: 
+    - "mkdir -p /tmp/packer-provisioner-ansible-local"
+    - "tar xzf /tmp/{{user `ansible_artifact`}} -C /tmp/packer-provisioner-ansible-local"
+- type: ansible-local
+  command: "ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 sudo ansible-playbook"
+  staging_directory: "/tmp/packer-provisioner-ansible-local"
+  playbook_file: base_playbook.yml
+  extra_arguments:
+  - '-vv'
+  - '-e "{{user `extra_vars`}}"'
+- type: shell
+  execute_command: "sudo sh -c '{{ .Vars }} {{ .Path }}'"
+  inline: 
+    - "systemctl stop crond"
+    - "systemctl disable crond"
+- type: shell
+  execute_command: "sudo sh -c '{{ .Vars }} {{ .Path }}'"
+  script: '{{user `script_path`}}/cleanup-centos.sh'

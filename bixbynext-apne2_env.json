@@ -1,0 +1,12 @@
+{
+  "aws_region": "ap-northeast-2", 
+  "aws_source_ami" : "ami-daaf02b4",
+  "aws_vpc_id": "vpc-bb4731d3", 
+  "aws_subnet_id": "subnet-dcd397b4", 
+  "aws_securitygroup_ids": "sg-cec4f0a5",
+  "aws_associate_public_ip_address": "false", 
+  "aws_iam_instance_profile": "ops-apne2",
+  "environment": "bixbynext-apne2",
+  "inventory_file": "bixbynext-apne2.ini"
+}
+

@@ -1,0 +1,100 @@
+{
+  "variables": {
+    "profile": "bixby-next", 
+    "aws_subnet_id": "subnet-03805248", 
+    "inventory_file": null, 
+    "custom_timestamp": "{{timestamp}}", 
+    "ami_regions": null, 
+    "storage_volume_size": "100", 
+    "aws_region": "us-east-1", 
+    "aws_associate_public_ip_address": "false", 
+    "aws_instance_type": "p2.xlarge", 
+    "environment": "dev", 
+    "aws_source_ami": "ami-4bf3d731", 
+    "aws_securitygroup_ids": "sg-1eda1c6c", 
+    "aws_ami_virtualization": "hvm", 
+    "ami_users": null, 
+    "aws_vpc_id": null
+  }, 
+  "provisioners": [
+    {
+      "inline": "sleep 10", 
+      "type": "shell"
+    }, 
+    {
+      "type": "shell", 
+      "script": "bootstrap-centos.sh"
+    }, 
+    {
+      "start_retry_timeout": "10m", 
+      "type": "shell", 
+      "script": "asr/nvidia.sh"
+    }, 
+    {
+      "start_retry_timeout": "10m", 
+      "type": "shell", 
+      "script": "asr/cuda.sh"
+    }, 
+    {
+      "type": "shell", 
+      "script": "asr/cleanup.sh"
+    }
+  ], 
+  "builders": [
+    {
+      "profile": "{{user `profile`}}", 
+      "ami_regions": "{{user `ami_regions`}}", 
+      "tags": {
+        "FriggaApp": "asr-enUS", 
+        "Name": "asr-enUS-{{user `environment`}}-{{user `custom_timestamp`}}"
+      }, 
+      "ssh_username": "centos", 
+      "ami_virtualization_type": "{{user `aws_ami_virtualization`}}", 
+      "run_tags": {
+        "Name": "asr_ami_{{user `environment`}}", 
+        "billing": "ops"
+      }, 
+      "launch_block_device_mappings": [
+        {
+          "volume_size": 30, 
+          "delete_on_termination": true, 
+          "volume_type": "gp2", 
+          "device_name": "/dev/sda1"
+        }, 
+        {
+          "volume_size": "{{user `storage_volume_size`}}", 
+          "delete_on_termination": true, 
+          "volume_type": "gp2", 
+          "device_name": "/dev/sdh"
+        }
+      ], 
+      "security_group_ids": "{{user `aws_securitygroup_ids`}}", 
+      "ami_block_device_mappings": [
+        {
+          "volume_size": 30, 
+          "delete_on_termination": true, 
+          "volume_type": "gp2", 
+          "device_name": "/dev/sda1"
+        }, 
+        {
+          "volume_size": "{{user `storage_volume_size`}}", 
+          "delete_on_termination": true, 
+          "volume_type": "gp2", 
+          "device_name": "/dev/sdh"
+        }
+      ], 
+      "source_ami": "{{user `aws_source_ami`}}", 
+      "subnet_id": "{{user `aws_subnet_id`}}", 
+      "region": "{{user `aws_region`}}", 
+      "ami_name": "bixby2-asr-base-{{user `custom_timestamp`}}", 
+      "iam_instance_profile": "{{user `aws_iam_instance_profile`}}", 
+      "ami_users": "{{user `ami_users`}}", 
+      "instance_type": "{{user `aws_instance_type`}}", 
+      "ami_description": "AMI for bixby 2.0 asr p2xlarge", 
+      "ssh_timeout": "5m", 
+      "associate_public_ip_address": "{{user `aws_associate_public_ip_address`}}", 
+      "vpc_id": "{{user `aws_vpc_id`}}", 
+      "type": "amazon-ebs"
+    }
+  ]
+}

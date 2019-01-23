@@ -1,0 +1,16 @@
+{
+  "aws_region": "us-east-1", 
+  "aws_source_ami" : "ami-4bf3d731",
+  "aws_vpc_id": "vpc-8e2decf6", 
+  "aws_subnet_id": "subnet-03805248", 
+  "aws_securitygroup_ids": "sg-1eda1c6c",
+  "aws_associate_public_ip_address": "false", 
+  "aws_iam_instance_profileaw ": "ops-ue1",
+  "environment": "bixbynext-ue1",
+  "inventory_file": "bixbynext-ue1.ini",
+  "profile": "bixby-next",
+  "ami_users": "717627950615,302637589460,642977738847",
+  "ami_regions": "us-west-2,us-east-1,ap-northeast-2"
+}
+
+
